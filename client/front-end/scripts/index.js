@@ -1,60 +1,34 @@
 /* eslint no-console:0 consistent-return:0 */
 "use strict";
 
-import { Shader, Program } from "./shader.js"
+import { Shader } from "./libs/GX/shader.js"
+import { Program } from "./libs/GX/program.js"
 import { read } from "./libs/tools.js"
 
 
-function createShader(gl, type, source) {
-    var shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-    if (success) {
-        return shader;
-    }
-
-    console.log(source)
-    console.log(gl.getShaderInfoLog(shader));
-    gl.deleteShader(shader);
+let PATH = {
+    vert: "../scripts/shaders/test.vsh",
+    frag: "../scripts/shaders/test.fsh",
 }
 
-function createProgram(gl, vertexShader, fragmentShader) {
-    var program = gl.createProgram();
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragmentShader);
-    gl.linkProgram(program);
-    var success = gl.getProgramParameter(program, gl.LINK_STATUS);
-    if (success) {
-        return program;
-    }
-
-    console.log(gl.getProgramInfoLog(program));
-    gl.deleteProgram(program);
-}
 
 async function main() {
     // Get A WebGL context
     var canvas = document.querySelector("#main");
     var gl = canvas.getContext("webgl");
+    Window.gl = gl;
     if (!gl) {
         return;
     }
 
-    // Get the strings for our GLSL shaders
-
-    // create GLSL shaders, upload the GLSL source, compile the shaders
-    // var vertexShader = createShader(gl, gl.VERTEX_SHADER, );
-    // var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, await read("../scripts/shaders/test.fsh"));
-
-    var vsh = Shader({ type: gl.VERTEX_SHADER, src: await read("../scripts/shaders/test.vsh"), ctx: gl });
-    var fsh = Shader({ type: gl.FRAGMENT_SHADER, src: await read("../scripts/shaders/test.fsh"), ctx: gl });
+    var vsh = Shader({ type: gl.VERTEX_SHADER, src: await read(PATH.vert), context: gl });
+    var fsh = Shader({ type: gl.FRAGMENT_SHADER, src: await read(PATH.frag), context: gl });
 
     // Link the two shaders into a program
-    let program = Program({ vsh: vsh, fsh: fsh, ctx: gl })
+    let program = Program({ vert: vsh, frag: fsh, context: gl }).link().use();
 
     // look up where the vertex data needs to go.
-    var positionAttributeLocation = gl.getAttribLocation(program._obj, "a_position");
+    var positionAttributeLocation = gl.getAttribLocation(program.get(), "a_position");
 
     // Create a buffer and put three 2d clip space points in it
     var positionBuffer = gl.createBuffer();

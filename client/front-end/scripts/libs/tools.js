@@ -7,14 +7,15 @@ export async function read(path) {
 }
 
 
-export function aclass(func) {
-    return function () {
-        if (!(this instanceof func)) {
-            return new func(...arguments)
-        }
-        return func(...arguments);
-    }
+/**
+ * @template inst
+ * @param {new() => inst} cls 
+ * @returns {inst}
+ */
+export function cls(cls) {
+    return (...args) => new cls(...args);
 }
+
 
 /**
  * @param {...Function} ...args decorators
@@ -22,12 +23,10 @@ export function aclass(func) {
  */
 export function decs() {
     let decorators = arguments;
-    return function (func) {
-        for (let decorator of decorators) {
-            func = decorator(func);
-        }
-        return func;
-    }
+    return (func) => (
+        [...decorators].reduce(
+            (func, dec) => dec(func),
+            func
+        )
+    );
 }
-
-decs()
